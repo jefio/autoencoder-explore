@@ -80,10 +80,20 @@ def get_mnist_datasets():
 
 
 class AutoEncoderPlot(object):
-    def __init__(self, models, datasets, exp_name):
+    def __init__(self, bottleneck_config, models, datasets, exp_name, folder):
+        self.bottleneck_config = bottleneck_config
         self.models = models
         self.datasets = datasets
         self.exp_name = exp_name
+        self.folder = folder
+
+
+    @staticmethod
+    def save_close(filename):
+        plt.savefig(filename)
+        plt.close()
+        mpl.rcParams.update(mpl.rcParamsDefault)
+
 
     def plot_reconstructions(self, decoded_imgs):
         n = 10  # how many digits we will display
@@ -102,10 +112,8 @@ class AutoEncoderPlot(object):
             plt.gray()
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
-        filename = expanduser('~/plot/exp_{}_reconstruction_test_data.png'.format(self.exp_name))
-        plt.savefig(filename)
-        plt.clf()
-        mpl.rcParams.update(mpl.rcParamsDefault)
+        filename = '{}/exp_{}_reconstruction_test_data.png'.format(self.folder, self.exp_name)
+        self.save_close(filename)
 
 
     def plot_dreams(self):
@@ -122,10 +130,8 @@ class AutoEncoderPlot(object):
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
 
-        filename = expanduser('~/plot/exp_{}_dream.png'.format(self.exp_name))
-        plt.savefig(filename)
-        plt.clf()
-        mpl.rcParams.update(mpl.rcParamsDefault)
+        filename = '{}/exp_{}_dream.png'.format(self.folder, self.exp_name)
+        self.save_close(filename)
 
 
     def plot_latent_vectors_2d(self):
@@ -135,9 +141,8 @@ class AutoEncoderPlot(object):
         plt.scatter(
             x_test_encoded[:, 0], x_test_encoded[:, 1], c=self.datasets['y_test'])
         plt.colorbar()
-        filename = expanduser('~/plot/exp_{}_latent_vectors.png'.format(self.exp_name))
-        plt.savefig(filename)
-        plt.clf()
+        filename = '{}/exp_{}_latent_vectors.png'.format(self.folder, self.exp_name)
+        self.save_close(filename)
 
 
     def plot_histogram_latent_activities(self, encoded_imgs):
