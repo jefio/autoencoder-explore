@@ -227,31 +227,32 @@ def main():
     parser.add_argument('-s', '--sizes', type=int, nargs='+', default=[784, 128, 64, 32])
     parser.add_argument('-e', '--epochs', type=int, default=50)
     parser.add_argument('-a', '--activation', type=str, default='relu')
-    parser.add_argument('--reg-kernel-method', type=str, default=None)
-    parser.add_argument('--reg-kernel-coefs', type=float, nargs='+', default=[0])
-    parser.add_argument('--reg-activity-method', type=str, default=None)
-    parser.add_argument('--reg-activity-coefs', type=float, nargs='+', default=[0])
+    parser.add_argument('-rkm', '--reg-kernel-method', type=str, default=None)
+    parser.add_argument('-rkc', '--reg-kernel-coefs', type=float, nargs='+', default=[0])
+    parser.add_argument('-ram', '--reg-activity-method', type=str, default=None)
+    parser.add_argument('-rac', '--reg-activity-coefs', type=float, nargs='+', default=[0])
     args = parser.parse_args()
+
+    if os.path.exists(args.folder):
+        print("folder={}, overwriting".format(args.folder))
+    else:
+        os.makedirs(args.folder)
 
     exp_idx = 0
     for activity_coef in args.reg_activity_coefs:
         for kernel_coef in args.reg_kernel_coefs:
             bottleneck_config = {
                 'activation': args.activation,
-                'regularization': {
-                    'activity': {
-                        'method': args.reg_activity_method,
-                        'coef': activity_coef},
-                    'kernel': {
-                        'method': args.reg_kernel_method,
-                        'coef': kernel_coef}
-                }
+                'activity_regularizer': {args.reg_activity_method: activity_coef},
+                'kernel_regularizer': {args.reg_kernel_method: kernel_coef}
             }
             models = get_autoencoder_models(args.sizes, bottleneck_config)
             aep = AutoEncoderPlot(
-                models, get_mnist_datasets(), string.ascii_uppercase[exp_idx])
+                bottleneck_config, models, get_mnist_datasets(),
+                exp_idx, args.folder)
             aep.fit_and_plot(args.epochs)
             exp_idx += 1
+    write_gifs(exp_idx, args.folder)
 
 
 if __name__ == '__main__':
