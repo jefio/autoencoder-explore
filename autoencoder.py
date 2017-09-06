@@ -2,8 +2,8 @@
 Fit and plot autoencoders
 """
 import argparse
-import string
-from os.path import expanduser
+import subprocess
+import os
 
 from keras.layers import Input, Dense
 from keras.models import Model
@@ -13,9 +13,11 @@ from keras.datasets import mnist
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
-def get_regularizer(method, coef):
+def get_regularizer(regularizer_config):
+    method, coef = next(iter(regularizer_config.items()))
     assert method in (None, 'l1', 'l2')
     if method is None:
         regularizer = None
@@ -35,12 +37,8 @@ def get_autoencoder_models(sizes, bottleneck_config):
     encoded = Dense(
         sizes[-1],
         activation=bottleneck_config['activation'],
-        activity_regularizer=get_regularizer(
-            bottleneck_config['regularization']['activity']['method'],
-            bottleneck_config['regularization']['activity']['coef']),
-        kernel_regularizer=get_regularizer(
-            bottleneck_config['regularization']['kernel']['method'],
-            bottleneck_config['regularization']['kernel']['coef'])
+        activity_regularizer=get_regularizer(bottleneck_config['activity_regularizer']),
+        kernel_regularizer=get_regularizer(bottleneck_config['kernel_regularizer'])
     )(encoded)
 
     decoded = encoded
