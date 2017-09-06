@@ -190,21 +190,40 @@ class AutoEncoderPlot(object):
             validation_data=(self.datasets['x_test'], self.datasets['x_test'])
         )
 
-        encoded_imgs = self.models['encoder'].predict(self.datasets['x_test'])
-        decoded_imgs = self.models['decoder'].predict(encoded_imgs)
+        encoded_train_imgs = self.models['encoder'].predict(self.datasets['x_train'])
+        encoded_test_imgs = self.models['encoder'].predict(self.datasets['x_test'])
+        decoded_test_imgs = self.models['decoder'].predict(encoded_test_imgs)
 
-        self.plot_reconstructions(decoded_imgs)
+        self.plot_reconstructions(decoded_test_imgs)
         self.plot_dreams()
         self.plot_latent_vectors_2d()
-        filename = expanduser('~/plot/exp_{}_model.png'.format(self.exp_name))
+        filename = '{}/exp_{}_model.png'.format(self.folder, self.exp_name)
         plot_model(
             self.models['autoencoder'], show_shapes=True, to_file=filename)
-        self.plot_histogram_latent_activities(encoded_imgs)
-        self.plot_histogram_latent_weights()
+        self.plot_latent_activities(encoded_train_imgs)
+        self.plot_latent_weights()
+
+
+def write_gifs(n_files, folder):
+    start = ['convert', '-loop', '0', '-delay', '100']
+    command1 = start + [
+        "{}/exp_{}_latent_activities.png".format(folder, idx)
+        for idx in range(n_files)
+    ]
+    command1 += ["{}/latent_activities.gif".format(folder)]
+    subprocess.call(command1)
+
+    command2 = start + [
+        "{}/exp_{}_latent_weights.png".format(folder, idx)
+        for idx in range(n_files)
+    ]
+    command2 += ["{}/latent_weights.gif".format(folder)]
+    subprocess.call(command2)
 
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--folder', type=str, required=True)
     parser.add_argument('-s', '--sizes', type=int, nargs='+', default=[784, 128, 64, 32])
     parser.add_argument('-e', '--epochs', type=int, default=50)
     parser.add_argument('-a', '--activation', type=str, default='relu')
