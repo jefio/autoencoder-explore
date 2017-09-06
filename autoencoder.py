@@ -145,31 +145,39 @@ class AutoEncoderPlot(object):
         self.save_close(filename)
 
 
-    def plot_histogram_latent_activities(self, encoded_imgs):
-        vec = encoded_imgs.flatten()
-        weights = 100. * np.ones_like(vec) / float(len(vec))
-        plt.hist(vec, weights=weights, ec='black')
-        plt.xlabel('activity')
-        plt.ylabel('percentage')
-        plt.grid(True)
-        filename = expanduser('~/plot/exp_{}_histogram_latent_components.png'.format(self.exp_name))
-        plt.savefig(filename)
-        plt.clf()
+    def plot_latent_activities(self, encoded_imgs):
+        ser = pd.Series(np.sort(np.abs(encoded_imgs.flatten())))
+        ser.plot(kind='line')
+        plt.xlabel('Latent unit')
+        plt.ylabel('Absolute activity')
+        plt.title(self.get_title())
+        filename = '{}/exp_{}_latent_activities.png'.format(self.folder, self.exp_name)
+        self.save_close(filename)
 
 
-    def plot_histogram_latent_weights(self):
-        vec = np.concatenate([
+    def get_title(self):
+        title = ""
+        method, coef = next(iter(self.bottleneck_config['kernel_regularizer'].items()))
+        if coef > 0:
+            title += "{} - C_kernel={}".format(method, coef)
+        method, coef = next(iter(self.bottleneck_config['activity_regularizer'].items()))
+        if coef > 0:
+            title += "{} - C_activity={}".format(method, coef)
+        return title
+
+
+    def plot_latent_weights(self):
+        weights = np.concatenate([
             x.flatten()
             for x in self.models['encoder'].layers[-1].get_weights()
         ])
-        weights = 100. * np.ones_like(vec) / float(len(vec))
-        plt.hist(vec, weights=weights, ec='black')
-        plt.xlabel('weight')
-        plt.ylabel('percentage')
-        plt.grid(True)
-        filename = expanduser('~/plot/exp_{}_histogram_latent_weights.png'.format(self.exp_name))
-        plt.savefig(filename)
-        plt.clf()
+        ser = pd.Series(np.sort(np.abs(weights)))
+        ser.plot(kind='line')
+        plt.xlabel('Edge of latent unit')
+        plt.ylabel('Absolute weight')
+        plt.title(self.get_title())
+        filename = '{}/exp_{}_latent_weights.png'.format(self.folder, self.exp_name)
+        self.save_close(filename)
 
 
     def fit_and_plot(self, epochs):
