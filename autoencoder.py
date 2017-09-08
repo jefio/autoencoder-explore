@@ -12,6 +12,7 @@ from keras.utils import plot_model
 from keras.datasets import mnist
 import numpy as np
 import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -154,6 +155,15 @@ class AutoEncoderPlot(object):
         filename = '{}/exp_{}_latent_activities.png'.format(self.folder, self.exp_name)
         self.save_close(filename)
 
+        ser = pd.Series(np.sort(np.mean(np.abs(encoded_imgs), axis=0)))
+        ser.plot(kind='line')
+        plt.xlabel('Latent unit')
+        plt.ylabel('Mean absolute activity')
+        plt.title(self.get_title())
+        plt.gca().set_ylim([0, 1])
+        filename = '{}/exp_{}_mean_latent_activities.png'.format(self.folder, self.exp_name)
+        self.save_close(filename)
+
 
     def get_title(self):
         title = ""
@@ -206,19 +216,26 @@ class AutoEncoderPlot(object):
 
 def write_gifs(n_files, folder):
     start = ['convert', '-loop', '0', '-delay', '100']
-    command1 = start + [
+    command = start + [
         "{}/exp_{}_latent_activities.png".format(folder, idx)
         for idx in range(n_files)
     ]
-    command1 += ["{}/latent_activities.gif".format(folder)]
-    subprocess.call(command1)
+    command += ["{}/latent_activities.gif".format(folder)]
+    subprocess.call(command)
 
-    command2 = start + [
+    command = start + [
+        "{}/exp_{}_mean_latent_activities.png".format(folder, idx)
+        for idx in range(n_files)
+    ]
+    command += ["{}/mean_latent_activities.gif".format(folder)]
+    subprocess.call(command)
+
+    command = start + [
         "{}/exp_{}_latent_weights.png".format(folder, idx)
         for idx in range(n_files)
     ]
-    command2 += ["{}/latent_weights.gif".format(folder)]
-    subprocess.call(command2)
+    command += ["{}/latent_weights.gif".format(folder)]
+    subprocess.call(command)
 
 
 def main():
