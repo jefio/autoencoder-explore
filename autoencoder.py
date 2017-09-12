@@ -5,9 +5,6 @@ import argparse
 import subprocess
 import os
 
-from keras.layers import Input, Dense
-from keras.models import Model
-from keras import regularizers
 from keras.utils import plot_model
 from keras.datasets import mnist
 import numpy as np
@@ -16,54 +13,7 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
-def get_regularizer(regularizer_config):
-    method, coef = next(iter(regularizer_config.items()))
-    assert method in (None, 'l1', 'l2')
-    if method is None:
-        regularizer = None
-    elif method == 'l1':
-        regularizer = regularizers.l1(coef)
-    elif method == 'l2':
-        regularizer = regularizers.l2(coef)
-    return regularizer
-
-
-def get_autoencoder_models(sizes, bottleneck_config):
-    input_img = Input(shape=(sizes[0],))
-    encoded = input_img
-    for size in sizes[1:-1]:
-        encoded = Dense(size, activation='relu')(encoded)
-    # bottleneck layer
-    encoded = Dense(
-        sizes[-1],
-        activation=bottleneck_config['activation'],
-        activity_regularizer=get_regularizer(bottleneck_config['activity_regularizer']),
-        kernel_regularizer=get_regularizer(bottleneck_config['kernel_regularizer'])
-    )(encoded)
-
-    decoded = encoded
-    for size in sizes[::-1][1:-1]:
-        decoded = Dense(size, activation='relu')(decoded)
-    decoded = Dense(sizes[0], activation='sigmoid')(decoded)
-
-    # models
-    autoencoder = Model(input_img, decoded)
-    encoder = Model(input_img, encoded)
-
-    encoded_input = Input(shape=(sizes[-1],))
-    decoded = encoded_input
-    for decoder_layer in autoencoder.layers[len(sizes):]:
-        decoded = decoder_layer(decoded)
-    decoder = Model(encoded_input, decoded)
-
-    autoencoder.compile(optimizer='rmsprop', loss='binary_crossentropy')
-
-    return {
-        'autoencoder': autoencoder,
-        'encoder': encoder,
-        'decoder': decoder
-    }
+from models import get_autoencoder_models
 
 
 def get_mnist_datasets():
