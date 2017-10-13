@@ -85,14 +85,22 @@ class AutoEncoderPlot(object):
         self.save_close(filename)
 
 
-    def plot_latent_vectors_2d(self):
+    def plot_latent_vectors_2d(self, train=True):
+        if train:
+            x_mat = self.datasets['x_train']
+            y_vec = self.datasets['y_train']
+            filename = '{}/exp_{}_latent_vectors_train.png'.format(self.folder, self.exp_name)
+        else:
+            x_mat = self.datasets['x_test']
+            y_vec = self.datasets['y_test']
+            filename = '{}/exp_{}_latent_vectors_test.png'.format(self.folder, self.exp_name)
+
         x_test_encoded = self.models['encoder'].predict(
-            self.datasets['x_test'], batch_size=256)
+            x_mat, batch_size=256)
         plt.figure(figsize=(6, 6))
-        plt.scatter(
-            x_test_encoded[:, 0], x_test_encoded[:, 1], c=self.datasets['y_test'])
+        plt.scatter(x_test_encoded[:, 0], x_test_encoded[:, 1], c=y_vec, cmap='tab10', alpha=0.8)
         plt.colorbar()
-        filename = '{}/exp_{}_latent_vectors.png'.format(self.folder, self.exp_name)
+        plt.title(self.get_title())
         self.save_close(filename)
 
 
@@ -156,7 +164,8 @@ class AutoEncoderPlot(object):
 
         self.plot_reconstructions(decoded_test_imgs)
         self.plot_dreams()
-        self.plot_latent_vectors_2d()
+        self.plot_latent_vectors_2d(train=True)
+        self.plot_latent_vectors_2d(train=False)
         filename = '{}/exp_{}_model.png'.format(self.folder, self.exp_name)
         plot_model(
             self.models['autoencoder'], show_shapes=True, to_file=filename)
