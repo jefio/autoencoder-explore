@@ -195,13 +195,18 @@ def write_gifs(n_files, folder):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--folder', type=str, required=True)
-    parser.add_argument('-s', '--sizes', type=int, nargs='+', default=[784, 128, 64, 32])
+    parser.add_argument('--sizes', type=int, nargs='+', default=[784, 256, 2])
     parser.add_argument('-e', '--epochs', type=int, default=50)
-    parser.add_argument('-a', '--activation', type=str, default='relu')
-    parser.add_argument('-rkm', '--reg-kernel-method', type=str, default=None)
+    parser.add_argument('-v', '--vae', type=int, default=0, choices=[0, 1])
+    parser.add_argument('-a', '--activation', type=str, default=None)
+    parser.add_argument('-rkm', '--reg-kernel-method', type=str, default=None,
+                        choices=[None, 'l1', 'l2'])
     parser.add_argument('-rkc', '--reg-kernel-coefs', type=float, nargs='+', default=[0])
-    parser.add_argument('-ram', '--reg-activity-method', type=str, default=None)
+    parser.add_argument('-ram', '--reg-activity-method', type=str, default=None,
+                        choices=[None, 'l1', 'l2', 'vae'])
     parser.add_argument('-rac', '--reg-activity-coefs', type=float, nargs='+', default=[0])
+    # specific to VAE
+    parser.add_argument('--stochastic-encoder', type=int, default=0, choices=[0, 1])
     args = parser.parse_args()
 
     if os.path.exists(args.folder):
@@ -215,9 +220,13 @@ def main():
             bottleneck_config = {
                 'activation': args.activation,
                 'activity_regularizer': {args.reg_activity_method: activity_coef},
-                'kernel_regularizer': {args.reg_kernel_method: kernel_coef}
+                'kernel_regularizer': {args.reg_kernel_method: kernel_coef},
+                'stochastic_encoder': args.stochastic_encoder
             }
-            models = get_autoencoder_models(args.sizes, bottleneck_config)
+            if args.vae:
+                models = get_vae_models(args.sizes, bottleneck_config)
+            else:
+                models = get_autoencoder_models(args.sizes, bottleneck_config)
             aep = AutoEncoderPlot(
                 bottleneck_config, models, get_mnist_datasets(),
                 exp_idx, args.folder)
