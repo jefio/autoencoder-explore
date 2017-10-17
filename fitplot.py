@@ -13,7 +13,7 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from models import get_autoencoder_models
+from models import get_autoencoder_models, get_vae_models
 
 
 def get_mnist_datasets():
@@ -170,31 +170,26 @@ class AutoEncoderPlot(object):
         plot_model(
             self.models['autoencoder'], show_shapes=True, to_file=filename)
         self.plot_latent_activities(encoded_train_imgs)
-        self.plot_latent_weights()
+        try:
+            self.plot_latent_weights()
+        except ValueError:
+            print('plot_latent_weights not available with VAE, skipping')
+
+
+def write_gif(n_files, folder, title):
+    start = ['convert', '-loop', '0', '-delay', '100']
+    infiles = ["{}/exp_{}_{}.png".format(folder, idx, title)
+               for idx in range(n_files)]
+    if all(os.path.isfile(filename) for filename in infiles):
+        command = start + infiles + ["{}/{}.gif".format(folder, title)]
+        subprocess.call(command)
 
 
 def write_gifs(n_files, folder):
-    start = ['convert', '-loop', '0', '-delay', '100']
-    command = start + [
-        "{}/exp_{}_latent_activities.png".format(folder, idx)
-        for idx in range(n_files)
-    ]
-    command += ["{}/latent_activities.gif".format(folder)]
-    subprocess.call(command)
-
-    command = start + [
-        "{}/exp_{}_mean_latent_activities.png".format(folder, idx)
-        for idx in range(n_files)
-    ]
-    command += ["{}/mean_latent_activities.gif".format(folder)]
-    subprocess.call(command)
-
-    command = start + [
-        "{}/exp_{}_latent_weights.png".format(folder, idx)
-        for idx in range(n_files)
-    ]
-    command += ["{}/latent_weights.gif".format(folder)]
-    subprocess.call(command)
+    titles = ['latent_activities', 'mean_latent_activities', 'latent_weights',
+              'latent_vectors_test', 'latent_vectors_train']
+    for title in titles:
+        write_gif(n_files, folder, title)
 
 
 def main():
