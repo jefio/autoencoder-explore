@@ -57,7 +57,7 @@ def get_autoencoder_models(sizes, bottleneck_config):
     }
 
 
-def get_vae_models(sizes):
+def get_vae_models(sizes, bottleneck_config):
     """
     Based on the Keras VAE example script.
     """
@@ -67,7 +67,7 @@ def get_vae_models(sizes):
 
     x = Input(shape=(original_dim,))
     h = Dense(intermediate_dim, activation='relu')(x)
-    z_mean = Dense(latent_dim)(h)
+    z_mean = Dense(latent_dim, activation=bottleneck_config['activation'])(h)
     z_log_var = Dense(latent_dim)(h)
 
     def sampling(args):
@@ -92,9 +92,9 @@ def get_vae_models(sizes):
             super(CustomVariationalLayer, self).__init__(**kwargs)
 
         def vae_loss(self, x, x_decoded_mean):
-            xent_loss = original_dim * metrics.binary_crossentropy(x, x_decoded_mean)
+            rec_loss = original_dim * metrics.mean_squared_error(x, x_decoded_mean)
             kl_loss = - 0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
-            return K.mean(xent_loss + kl_loss)
+            return K.mean(rec_loss + bottleneck_config['activity_regularizer']['vae'] * kl_loss)
 
         def call(self, inputs):
             x = inputs[0]
@@ -109,7 +109,10 @@ def get_vae_models(sizes):
     vae.compile(optimizer='rmsprop', loss=None)
 
     # build a model to project inputs on the latent space
-    encoder = Model(x, z_mean)
+    if bottleneck_config['stochastic_encoder']:
+        encoder = Model(x, z)
+    else:
+        encoder = Model(x, z_mean)
 
     # build a digit generator that can sample from the learned distribution
     decoder_input = Input(shape=(latent_dim,))
