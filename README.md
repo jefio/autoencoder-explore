@@ -2,10 +2,9 @@
 
 Fit autoencoders on the MNIST dataset and plot properties of the learned models.
 
-## Prerequisites
+## Dependencies
 
-* Python 3
-* Keras 2.0.6
+Python 3.5, Keras 2.0.6, Numpy, Pandas, and Matplotlib.
 
 ## Examples
 
